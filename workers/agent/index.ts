@@ -4,9 +4,16 @@ import {
     type AgentNamespace,
 } from "agents";
 
+import { AIChatAgent } from "agents/ai-chat-agent";
+import { type UIMessage, type StreamTextOnFinishCallback, type ToolSet, streamText, convertToModelMessages } from "ai";
+import { createOpenAICompatible } from "@ai-sdk/openai-compatible";
+
 interface Env {
     studybuddyagent: AgentNamespace<StudyBuddyAgent>;
 }
+
+
+const modelId = 'gpt-oss-120b';
 
 export default {
     async fetch(request: Request, env: Env): Promise<Response> {
@@ -43,6 +50,7 @@ export default {
 interface MyState {
     counter: number;
     lastUpdated: Date | null;
+    messages: UIMessage[];
 }
 
 const corsHeaders = {
@@ -51,33 +59,29 @@ const corsHeaders = {
     "Access-Control-Allow-Headers": "Content-Type",
 };
 
-export class StudyBuddyAgent extends Agent<Env, MyState> {
+export class StudyBuddyAgent extends AIChatAgent<Env, MyState> {
     initialState = {
         counter: 0,
         lastUpdated: null,
+        cat: "",
+        messages: []
     };
 
-    async onRequest(request: Request) {
-        // Handle CORS preflight
-        if (request.method === "OPTIONS") {
-            return new Response(null, { headers: corsHeaders });
-        }
+    einfra = createOpenAICompatible({
+        name: "einfra",
+        baseURL: "https://chat.ai.e-infra.cz/api/",
+        apiKey: this.env.EINFRA_API_KEY,
+    });
 
-        if (request.method === "POST") {
-            await this.incrementCounter();
-            return new Response(JSON.stringify(this.state), {
-                headers: { "Content-Type": "application/json", ...corsHeaders },
-            });
-        }
-        return new Response(JSON.stringify(this.state), {
-            headers: { "Content-Type": "application/json", ...corsHeaders },
+    async onChatMessage(onFinish: StreamTextOnFinishCallback<ToolSet>) {
+        const result = streamText({
+            model: this.einfra(modelId),
+            system: "Always reply with the number 43",
+            messages: convertToModelMessages(this.messages),
+            onFinish,
         });
+
+        return result.toUIMessageStreamResponse();
     }
 
-    async incrementCounter() {
-        this.setState({
-            counter: this.state.counter + 1,
-            lastUpdated: new Date(),
-        });
-    }
 }

@@ -24,10 +24,14 @@
     "cf-typegen": "wrangler types --env-interface CloudflareEnv cloudflare-env.d.ts"
   },
   "dependencies": {
+    "@ai-sdk/openai-compatible": "^1.0.29",
+    "@ai-sdk/react": "^2.0.118",
     "@libsql/client": "^0.14.0",
     "@opennextjs/cloudflare": "^1.14.7",
     "@t3-oss/env-nextjs": "^0.12.0",
     "agents": "^0.2.32",
+    "ai": "^5.0.116",
+    "ai-gateway-provider": "^2.3.0",
     "drizzle-orm": "^0.41.0",
     "next": "^15.2.3",
     "react": "^19.0.0",
