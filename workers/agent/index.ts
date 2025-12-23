@@ -10,6 +10,8 @@ import { createOpenAICompatible } from "@ai-sdk/openai-compatible";
 import type { CalendarEntry } from "~/lib/types/calendar";
 import { tool, type ToolSet } from "ai";
 import { z } from "zod/v3";
+import { createAiGateway } from 'ai-gateway-provider';
+import { createDeepSeek } from 'ai-gateway-provider/providers/deepseek';
 
 
 interface Env {
@@ -64,6 +66,13 @@ const corsHeaders = {
     "Access-Control-Allow-Headers": "Content-Type",
 };
 
+const systemPrompt = `You are a helpful calendar assistant called Study Buddy. You are an expert in time management and organization for students.` +
+    ` You can help users schedule their study time, set reminders for assignments and exams, and manage their academic calendar effectively.` +
+    ` You have a set of tools to accomplish the user tasks. Always try to find a way to use the tools to complete the users request.` +
+    ` Try to provide some feedback immediately after the user's request. Then use the tools to complete the request.` +
+    ` Ask user additional questions if needed to clarify the request.` +
+    ` Todays date is ` + new Date().toISOString().split('T')[0] + `.`;
+
 export class StudyBuddyAgent extends AIChatAgent<Env, MyState> {
     [x: string]: any;
     initialState = {
@@ -74,16 +83,27 @@ export class StudyBuddyAgent extends AIChatAgent<Env, MyState> {
         calendarEntries: [],
     };
 
-    einfra = createOpenAICompatible({
-        name: "einfra",
-        baseURL: "https://chat.ai.e-infra.cz/api/",
-        apiKey: this.env.EINFRA_API_KEY,
+    // Einfra is a closed provider
+
+    // einfra = createOpenAICompatible({
+    //     name: "einfra",
+    //     baseURL: "https://chat.ai.e-infra.cz/api/",
+    //     apiKey: this.env.EINFRA_API_KEY,
+    // });
+
+    aigateway = createAiGateway({
+        binding: this.env.AI.gateway('moria'),
+    });
+
+    deepseek = createDeepSeek({
+        apiKey: this.env.DEEPSEEK_API_KEY,
     });
 
     async onChatMessage(onFinish: StreamTextOnFinishCallback<ToolSet>) {
         const result = streamText({
-            model: this.einfra(modelId),
-            system: "You are a helpful calendar assistant. Use the tools you have to assist the user. Todays date is " + new Date().toISOString().split('T')[0],
+            // model: this.einfra(modelId),
+            model: this.aigateway(this.deepseek.chat("deepseek-chat")),
+            system: systemPrompt,
             messages: convertToModelMessages(this.messages),
             tools: { getUsersCalendar: this.getUsersCalendar, createEventInCalendar: this.createEventInCalendar, updateEventInCalendar: this.updateEventInCalendar, deleteEventInCalendar: this.deleteEventInCalendar },
             stopWhen: stepCountIs(10),

@@ -1,7 +1,8 @@
 "use client";
 
-import { ChatInterface } from "./agent";
-import { CalendarEvents } from "~/components/calendar/calendar-events";
+import { AgentInfo } from "~/components/agent-info";
+import { ChatInterface } from "../components/chat-interface";
+import { CalendarEvents } from "~/components/calendar-events";
 import { CalendarRefreshProvider } from "~/lib/calendar-context";
 
 export default function HomePage() {
@@ -14,6 +15,8 @@ export default function HomePage() {
           <CalendarEvents />
 
           <ChatInterface />
+
+          <AgentInfo />
         </div>
       </main>
     </CalendarRefreshProvider>

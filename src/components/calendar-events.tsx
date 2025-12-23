@@ -23,7 +23,7 @@ import {
   GraduationCap,
 } from "lucide-react";
 import type { CalendarEntry } from "~/lib/types/calendar";
-import { AGENT_URL } from "~/app/agent";
+import { AGENT_URL } from "~/components/chat-interface";
 
 const eventTypeIcons = {
   exam: GraduationCap,
@@ -77,7 +77,7 @@ export function CalendarEvents() {
     void loadCalendarFromAgent();
   }, [loadCalendarFromAgent, refreshKey]);
 
-  // Sync calendar entries to the agent whenever they change 
+  // Sync calendar entries to the agent whenever they change
   useEffect(() => {
     if (!isInitialized) return;
 

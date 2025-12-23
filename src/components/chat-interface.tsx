@@ -5,16 +5,18 @@ import { useAgent } from "agents/react";
 import { useState, useEffect, useRef } from "react";
 import {
   Message,
-  MessageAction,
   MessageActions,
   MessageContent,
   MessageResponse,
 } from "~/components/ai-elements/message";
-import { CopyIcon, RefreshCcwIcon } from "lucide-react";
+import {
+  Conversation,
+  ConversationContent,
+  ConversationScrollButton,
+} from "~/components/ai-elements/conversation";
 import { Button } from "~/components/ui/button";
 import { Input } from "~/components/ui/input";
 import { useCalendarRefresh } from "~/lib/calendar-context";
-import { D } from "node_modules/agents/dist/index-B6XHf8p0";
 
 // In production, this should be your deployed worker URL
 const AGENT_WORKER_HOST =
@@ -88,42 +90,45 @@ export function ChatInterface() {
 
   return (
     <div className="mx-auto flex h-[600px] w-full max-w-2xl flex-col rounded-lg border border-gray-200 bg-white shadow-lg">
-      <div className="flex-1 space-y-4 overflow-y-auto p-4">
-        {messageList.length === 0 && (
-          <div className="py-8 text-center text-gray-500">
-            No messages yet. Start a conversation!
-          </div>
-        )}
-        {messageList.map((message, i) => {
-          const content = getMessageContent(message);
-          const from = message.role === "user" ? "user" : "assistant";
+      <Conversation className="flex-1">
+        <ConversationContent className="space-y-4">
+          {messageList.length === 0 && (
+            <div className="py-8 text-center text-gray-500">
+              No messages yet. Start a conversation!
+            </div>
+          )}
+          {messageList.map((message, i) => {
+            const content = getMessageContent(message);
+            const from = message.role === "user" ? "user" : "assistant";
 
-          return (
-            <Message from={from} key={message.id ?? i}>
-              <MessageContent>
-                {from === "assistant" ? (
-                  <div>
-                    🤖
-                    <MessageResponse>{content}</MessageResponse>
-                  </div>
-                ) : (
-                  content
-                )}
-              </MessageContent>
-              {from === "assistant" && <MessageActions></MessageActions>}
-            </Message>
-          );
-        })}
+            return (
+              <Message from={from} key={message.id ?? i}>
+                <MessageContent>
+                  {from === "assistant" ? (
+                    <div>
+                      <p className="font-bold">🤖 Study buddy</p>
+                      <MessageResponse>{content}</MessageResponse>
+                    </div>
+                  ) : (
+                    content
+                  )}
+                </MessageContent>
+                {from === "assistant" && <MessageActions></MessageActions>}
+              </Message>
+            );
+          })}
 
-        {isLoading && (
-          <div className="text-gray-500 italic">AI is typing...</div>
-        )}
-        {error && (
-          <div className="rounded-lg bg-red-100 p-3 text-red-600">
-            Error: {error.message}
-          </div>
-        )}
-      </div>
+          {isLoading && (
+            <div className="text-gray-500 italic">AI is typing...</div>
+          )}
+          {error && (
+            <div className="rounded-lg bg-red-100 p-3 text-red-600">
+              Error: {error.message}
+            </div>
+          )}
+        </ConversationContent>
+        <ConversationScrollButton />
+      </Conversation>
 
       <form
         onSubmit={handleSubmit}
