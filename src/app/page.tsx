@@ -4,6 +4,7 @@ import { AgentInfo } from "~/components/agent-info";
 import { ChatInterface } from "../components/chat-interface";
 import { CalendarEvents } from "~/components/calendar-events";
 import { CalendarRefreshProvider } from "~/lib/calendar-context";
+import { GithubLink } from "~/components/github-link";
 
 export default function HomePage() {
   return (
@@ -17,6 +18,8 @@ export default function HomePage() {
           <ChatInterface />
 
           <AgentInfo />
+
+          <GithubLink />
         </div>
       </main>
     </CalendarRefreshProvider>
