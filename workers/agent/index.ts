@@ -83,9 +83,9 @@ export class StudyBuddyAgent extends AIChatAgent<Env, MyState> {
     async onChatMessage(onFinish: StreamTextOnFinishCallback<ToolSet>) {
         const result = streamText({
             model: this.einfra(modelId),
-            system: "You are a helpful calendar assistant. Use the tools you have to assist the user.",
+            system: "You are a helpful calendar assistant. Use the tools you have to assist the user. Todays date is " + new Date().toISOString().split('T')[0],
             messages: convertToModelMessages(this.messages),
-            tools: { getUsersCalendar: this.getUsersCalendar },
+            tools: { getUsersCalendar: this.getUsersCalendar, createEventInCalendar: this.createEventInCalendar, updateEventInCalendar: this.updateEventInCalendar, deleteEventInCalendar: this.deleteEventInCalendar },
             stopWhen: stepCountIs(10),
             onFinish,
         });
@@ -135,6 +135,80 @@ export class StudyBuddyAgent extends AIChatAgent<Env, MyState> {
         inputSchema: z.object({}),
         execute: async ({ }) => {
             console.log('Running getUsersCalendar tool')
+            const entries = this.state.calendarEntries;
+            return entries;
+        }
+    });
+
+    createEventInCalendar = tool({
+        description: "Create a new entry in the users calendar. Returns all the entries.",
+        inputSchema: z.object({
+            id: z.string().describe('Unique id'),
+            date: z.string().describe('Date of the entry in the format "2026-01-14T10:00"'),
+            subject: z.string().describe('Name of the university subject the entry relates to'),
+            type: z.string().describe('Type of the calendar entry. Allowed values: "exam" | "assignment" | "lecture" | "study"'),
+            description: z.string().describe('Optional description of the entry')
+        }),
+        execute: async ({ id, date, subject, type, description }) => {
+            console.log('Running createEventInCalendar tool')
+
+            this.state.calendarEntries.push(
+                {
+                    id: id,
+                    date: date,
+                    subject: subject,
+                    type: type as "exam" | "assignment" | "lecture" | "study",
+                    description: description
+                }
+            )
+
+            const entries = this.state.calendarEntries;
+            return entries;
+        }
+    });
+
+    updateEventInCalendar = tool({
+        description: "Update an existing entry in the users calendar. Returns all the entries.",
+        inputSchema: z.object({
+            id: z.string().describe('Unique id of the entry to update'),
+            date: z.string().optional().describe('Date of the entry in the format "2026-01-14T10:00"'),
+            subject: z.string().optional().describe('Name of the university subject the entry relates to'),
+            type: z.string().optional().describe('Type of the calendar entry. Allowed values: "exam" | "assignment" | "lecture" | "study"'),
+            description: z.string().optional().describe('Optional description of the entry')
+        }),
+        execute: async ({ id, date, subject, type, description }) => {
+            console.log('Running updateEventInCalendar tool')
+
+            const entryIndex = this.state.calendarEntries.findIndex(entry => entry.id === id);
+            if (entryIndex === -1) {
+                throw new Error(`No calendar entry found with id ${id}`);
+            }
+
+            const entry = this.state.calendarEntries[entryIndex]!;
+
+            this.state.calendarEntries[entryIndex] = {
+                ...entry,
+                date: date ?? entry.date,
+                subject: subject ?? entry.subject,
+                type: type as "exam" | "assignment" | "lecture" | "study" ?? entry.type,
+                description: description ?? entry.description
+            };
+
+            const entries = this.state.calendarEntries;
+            return entries;
+        }
+    });
+
+    deleteEventInCalendar = tool({
+        description: "Delete an entry from the users calendar. Returns all the entries.",
+        inputSchema: z.object({
+            id: z.string().describe('Unique id of the entry to delete')
+        }),
+        execute: async ({ id }) => {
+            console.log('Running deleteEventInCalendar tool')
+
+            this.state.calendarEntries = this.state.calendarEntries.filter(entry => entry.id !== id);
+
             const entries = this.state.calendarEntries;
             return entries;
         }

@@ -2,7 +2,7 @@
 
 import { useAgentChat } from "agents/ai-react";
 import { useAgent } from "agents/react";
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import {
   Message,
   MessageAction,
@@ -13,6 +13,7 @@ import {
 import { CopyIcon, RefreshCcwIcon } from "lucide-react";
 import { Button } from "~/components/ui/button";
 import { Input } from "~/components/ui/input";
+import { useCalendarRefresh } from "~/lib/calendar-context";
 import { D } from "node_modules/agents/dist/index-B6XHf8p0";
 
 // In production, this should be your deployed worker URL
@@ -38,6 +39,8 @@ function getMessageContent(message: {
 
 export function ChatInterface() {
   const [input, setInput] = useState("");
+  const { triggerRefresh } = useCalendarRefresh();
+  const prevStatusRef = useRef<string | null>(null);
 
   // Connect to the chat agent
   const agentConnection = useAgent({
@@ -52,6 +55,20 @@ export function ChatInterface() {
   });
 
   const isLoading = status === "streaming" || status === "submitted";
+
+  // Trigger calendar refresh when agent finishes responding
+  useEffect(() => {
+    // Check if status changed from streaming/submitted to ready
+    if (
+      (prevStatusRef.current === "streaming" ||
+        prevStatusRef.current === "submitted") &&
+      status === "ready"
+    ) {
+      // Agent finished responding, refresh calendar in case it was modified
+      triggerRefresh();
+    }
+    prevStatusRef.current = status;
+  }, [status, triggerRefresh]);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setInput(e.target.value);

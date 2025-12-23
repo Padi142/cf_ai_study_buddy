@@ -1,7 +1,8 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { Button } from "~/components/ui/button";
+import { useCalendarRefresh } from "~/lib/calendar-context";
 import { Input } from "~/components/ui/input";
 import { Label } from "~/components/ui/label";
 import { Select } from "~/components/ui/select";
@@ -49,28 +50,34 @@ export function CalendarEvents() {
     description: "",
   });
 
-  // Load calendar entries from the agent on initial mount
-  useEffect(() => {
-    const loadCalendarFromAgent = async () => {
-      try {
-        const response = await fetch(
-          `${AGENT_URL}/agents/studybuddyagent/mlem/calendar`,
-        );
-        if (response.ok) {
-          const data = (await response.json()) as { entries: CalendarEntry[] };
-          setCalendarEntries(data.entries ?? []);
-        }
-      } catch (error) {
-        console.error("Failed to load calendar from agent:", error);
-      } finally {
-        setIsInitialized(true);
-      }
-    };
+  const { refreshKey } = useCalendarRefresh();
 
-    void loadCalendarFromAgent();
+  // Load calendar entries from the agent
+  const loadCalendarFromAgent = useCallback(async () => {
+    try {
+      const response = await fetch(
+        `${AGENT_URL}/agents/studybuddyagent/mlem/calendar`,
+      );
+      if (response.ok) {
+        const data = (await response.json()) as { entries: CalendarEntry[] };
+        data.entries.sort(
+          (a, b) => new Date(a.date).getTime() - new Date(b.date).getTime(),
+        );
+        setCalendarEntries(data.entries ?? []);
+      }
+    } catch (error) {
+      console.error("Failed to load calendar from agent:", error);
+    } finally {
+      setIsInitialized(true);
+    }
   }, []);
 
-  // Sync calendar entries to the agent whenever they change (after initial load)
+  // Load calendar entries on initial mount and when refreshKey changes
+  useEffect(() => {
+    void loadCalendarFromAgent();
+  }, [loadCalendarFromAgent, refreshKey]);
+
+  // Sync calendar entries to the agent whenever they change 
   useEffect(() => {
     if (!isInitialized) return;
 
