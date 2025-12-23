@@ -65,6 +65,7 @@ const corsHeaders = {
 };
 
 export class StudyBuddyAgent extends AIChatAgent<Env, MyState> {
+    [x: string]: any;
     initialState = {
         counter: 0,
         lastUpdated: null,
