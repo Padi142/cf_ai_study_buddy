@@ -54,6 +54,7 @@ export default tseslint.config(
       "@typescript-eslint/no-unsafe-return": "warn",
       "@typescript-eslint/prefer-nullish-coalescing": "warn",
       "import/no-anonymous-default-export": "warn",
+      "@typescript-eslint/no-floating-promises": "warn",
       "prefer-const": "warn",
     },
   },
