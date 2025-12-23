@@ -5,8 +5,12 @@ import {
 } from "agents";
 
 import { AIChatAgent } from "agents/ai-chat-agent";
-import { type UIMessage, type StreamTextOnFinishCallback, type ToolSet, streamText, convertToModelMessages } from "ai";
+import { type UIMessage, type StreamTextOnFinishCallback, streamText, convertToModelMessages, stepCountIs } from "ai";
 import { createOpenAICompatible } from "@ai-sdk/openai-compatible";
+import type { CalendarEntry } from "~/lib/types/calendar";
+import { tool, type ToolSet } from "ai";
+import { z } from "zod/v3";
+
 
 interface Env {
     studybuddyagent: AgentNamespace<StudyBuddyAgent>;
@@ -51,6 +55,7 @@ interface MyState {
     counter: number;
     lastUpdated: Date | null;
     messages: UIMessage[];
+    calendarEntries: CalendarEntry[]
 }
 
 const corsHeaders = {
@@ -64,7 +69,8 @@ export class StudyBuddyAgent extends AIChatAgent<Env, MyState> {
         counter: 0,
         lastUpdated: null,
         cat: "",
-        messages: []
+        messages: [],
+        calendarEntries: [],
     };
 
     einfra = createOpenAICompatible({
@@ -76,12 +82,63 @@ export class StudyBuddyAgent extends AIChatAgent<Env, MyState> {
     async onChatMessage(onFinish: StreamTextOnFinishCallback<ToolSet>) {
         const result = streamText({
             model: this.einfra(modelId),
-            system: "Always reply with the number 43",
+            system: "You are a helpful calendar assistant. Use the tools you have to assist the user.",
             messages: convertToModelMessages(this.messages),
+            tools: { getUsersCalendar: this.getUsersCalendar },
+            stopWhen: stepCountIs(10),
             onFinish,
         });
 
         return result.toUIMessageStreamResponse();
     }
 
+    async onRequest(request: Request) {
+        const url = new URL(request.url);
+
+        // Handle your custom endpoints
+        if (url.pathname.includes("/hello")) {
+            return new Response("Hello from Agent!");
+        }
+
+        // Sync calendar entries
+        if (url.pathname.includes("/calendar") && request.method === "POST") {
+            try {
+                const body = await request.json() as { entries: CalendarEntry[] };
+                this.setState({ ...this.state, calendarEntries: body.entries });
+                return Response.json(
+                    { success: true, count: body.entries.length },
+                    { headers: corsHeaders }
+                );
+            } catch (error) {
+                return Response.json(
+                    { success: false, error: "Invalid request body" },
+                    { status: 400, headers: corsHeaders }
+                );
+            }
+        }
+
+        // Get calendar entries
+        if (url.pathname.includes("/calendar") && request.method === "GET") {
+            return Response.json(
+                { entries: this.state.calendarEntries },
+                { headers: corsHeaders }
+            );
+        }
+
+        // Fall back to parent class for AIChatAgent endpoints
+        return super.onRequest(request);
+    }
+
+    getUsersCalendar = tool({
+        description: "Get all entries the user has in their calendar",
+        inputSchema: z.object({}),
+        execute: async ({ }) => {
+            console.log('Running getUsersCalendar tool')
+            const entries = this.state.calendarEntries;
+            return entries;
+        }
+    });
+
 }
+
+
