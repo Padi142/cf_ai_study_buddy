@@ -3,8 +3,6 @@
   "name": "cf-ai-study-buddy-agent",
   "main": "./index.ts",
   "compatibility_date": "2025-12-19",
-  // Load .env from the top-level project directory
-  "dot_dev": "../../.env",
   "compatibility_flags": ["nodejs_compat"],
   "durable_objects": {
     "bindings": [
