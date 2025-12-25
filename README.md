@@ -38,7 +38,16 @@ To run this project locally, follow these steps:
    pnpm install
    ```
 3. Set up environment variables:
-   Create a `.env` file in the root directory and add the necessary environment variables as specified in `.env.example`. Mainly the DEEPSEEK_API_KEY. 4. Run the app and agent in separate terminals:
+   Create a `.env` file in the root directory and add the necessary environment variables as specified in `.env.example`. Mainly the DEEPSEEK_API_KEY.
+
+   also do
+
+   ```bash
+    cd workers/agent
+    wrangler secret put DEEPSEEK_API_KEY
+   ```
+
+4. Run the app and agent in separate terminals:
 
    ```bash
    pnpm dev
@@ -48,7 +57,7 @@ To run this project locally, follow these steps:
    pnpm run dev:agent
    ```
 
-4. Open your browser and navigate to `http://localhost:3000` to access the application.
+5. Open your browser and navigate to `http://localhost:3000` to access the application.
 
 ## Deployment
 
