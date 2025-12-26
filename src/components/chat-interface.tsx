@@ -89,7 +89,7 @@ export function ChatInterface() {
   const messageList = Array.isArray(messages) ? messages : [];
 
   return (
-    <div className="mx-auto flex h-[600px] w-full max-w-2xl flex-col rounded-lg border border-gray-200 bg-white shadow-lg">
+    <div className="mx-auto flex h-[680px] w-full flex-col rounded-lg border border-gray-200 bg-white shadow-lg">
       <Conversation className="flex-1">
         <ConversationContent className="space-y-4">
           {messageList.length === 0 && (
